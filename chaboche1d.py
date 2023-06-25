@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 worksheet.write(i, j, data[i][j])
             else:
                 worksheet.write(i, j, rate_data[i][j - len(data[i])])
-    savePath = 'D:\\yan\\chaboche model\\1draw.csv'
+    savePath = 'F:\\Coderlife\\Pilogue\\1draw.csv'
     work_book.save(savePath)
 
     # Extract data after Standardization
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 worksheet.write(i, j, data_train[i][j])
             else:
                 worksheet.write(i, j, rate_train[i][j - len(data_train[i])])
-    savePath = 'D:\\yan\\chaboche model\\1d.csv'
+    savePath = 'F:\\Coderlife\\Pilogue\\1d.csv'
     work_book.save(savePath)
 
 
