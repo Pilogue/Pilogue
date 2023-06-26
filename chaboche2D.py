@@ -150,8 +150,10 @@ class Chaboche2D:
             tspan = [t[i-1], t[i]]
             # Solve for next step
             z = odeint(self.deriv, z0, tspan, args=(stiff, ET))
-            sigma.append(stiff * (ET - z[1, 0:3]))
-            rate.append(self.deriv(z0, tspan, stiff, ET))
+            ##############################################
+            #sigma.append(stiff * (ET - z[1, 0:3]))
+            #rate.append(self.deriv(z0, tspan, stiff, ET))
+            ##############################################
             # store solution for plotting
             self.solutions.append(z)
             # Next initial condition
@@ -163,8 +165,10 @@ class Chaboche2D:
 if __name__ == "__main__":
     # initial conditions - Evp(tensor) / X(tensor) / R / p
     z0 = [0, 0, 0, 0, 0, 0, 50.0, 0]
-    sigma = [0, 0, 0]
-    rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
+    ##############################################
+    #sigma = [[0, 0, 0]]
+    #rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
+    ##############################################
     # number of data points
     n = 1000
     # Choose one test from −> (xx, yy, xy)
@@ -176,48 +180,55 @@ if __name__ == "__main__":
     model_2D = Chaboche2D(5000.0, 0.3, 500.0, 0.0, 50.0, 7500.0, 0.6, 100.0, 3.0, test, Emax)
     # Time points
     t = np.linspace(0, 80, n)
-    # Solve Chaboche’s 1D model with given material parameters
+    # Solve Chaboche’s 2D model with given material parameters
     model_2D.solve(z0, t)
     #######################################
     data1 = np.array(model_2D.solutions)
-    # data = np.zeros((1000, 8))
-    # for j in range(8):
-    #     for i in range(0, len(t)):
-    #         if i < n - 1:
-    #             data[i, j] = data1[i, 0, j]
-    #         else:
-    #             data[i, j] = data1[i - 1, 1, j]
+    data = np.zeros((1000, 8))
+    for j in range(8):
+        for i in range(0, len(t)):
+            if i < n - 1:
+                data[i, j] = data1[i, 0, j]
+            else:
+                data[i, j] = data1[i - 1, 1, j]
     # sigma1 = np.array(sigma)
     # data = np.insert(data, 3, sigma1, axis=1)
-    # plt.plot(t, data[:, 0], label='Evp_x')
-    # plt.plot(t, data[:, 1], label='Evp_y')
-    # plt.plot(t, data[:, 2], label='Evp_z')
-    # plt.plot(t, data[:, 3], label='X_x')
-    # plt.plot(t, data[:, 4], label='Y_x')
-    # plt.plot(t, data[:, 5], label='Z_x')
-    # plt.plot(t, data[:, 6], label='R')
-    # plt.plot(t, data[:, 7], label='p')
+    plt.plot(t, data[:, 0], label='Evp_x')
+    plt.plot(t, data[:, 1], label='Evp_y')
+    plt.plot(t, data[:, 2], label='Evp_z')
+    plt.plot(t, data[:, 3], label='X_x')
+    plt.plot(t, data[:, 4], label='X_y')
+    plt.plot(t, data[:, 5], label='X_z')
+    plt.plot(t, data[:, 6], label='R')
+    plt.plot(t, data[:, 7], label='p')
     # plt.plot(t, data[:, 8], label='σx')
     # plt.plot(t, data[:, 9], label='σy')
     # plt.plot(t, data[:, 10], label='σz')
-    # plt.grid()
-    # plt.legend()
-    # plt.show()
+    plt.grid()
+    plt.legend()
+    plt.show()
     # #######################################
     #
     # ################# standardization ###################
-    # scaler = StandardScaler()
-    # data_train = scaler.fit_transform(data)
-    # plt.plot(range(n), data_train[:, 0], label='Evp')
-    # plt.plot(range(n), data_train[:, 1], label='X')
-    # plt.plot(range(n), data_train[:, 2], label='R')
-    # plt.plot(range(n), data_train[:, 3], label='σ')
-    # plt.title("1D_Standardization")
-    # plt.xlabel("Training sample")
-    # plt.ylabel("stress/Mpa")
-    # plt.grid()
-    # plt.legend()
-    # plt.show()
+    scaler = StandardScaler()
+    data_train = scaler.fit_transform(data)
+    plt.plot(range(n), data_train[:, 0], label='Evp_x')
+    plt.plot(range(n), data_train[:, 1], label='Evp_y')
+    plt.plot(range(n), data_train[:, 2], label='Evp_z')
+    plt.plot(range(n), data_train[:, 3], label='X_x')
+    plt.plot(range(n), data_train[:, 4], label='X_y')
+    plt.plot(range(n), data_train[:, 5], label='X-z')
+    plt.plot(range(n), data_train[:, 6], label='R')
+    plt.plot(range(n), data_train[:, 7], label='p')
+    # plt.plot(range(n), data_train[:, 8], label='σx')
+    # plt.plot(range(n), data_train[:, 9], label='σy')
+    # plt.plot(range(n), data_train[:, 10], label='σz')
+    plt.title("2D_Standardization")
+    plt.xlabel("Training sample")
+    plt.ylabel("stress/Mpa")
+    plt.grid()
+    plt.legend()
+    plt.show()
     #
     # # Extract data
     # work_book = xlwt.Workbook(encoding="UTF-8")
