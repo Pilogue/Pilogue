@@ -38,7 +38,7 @@ class Chaboche1D:
             of time(t).
         """
         tc = 20.0         # Cyclic time for one cyclic loading
-        Emax = 0.072      # Maximum mechanical displacement
+        Emax = 0.036      # Maximum mechanical displacement
         Emin = -Emax
         tcicle = t-tc*math.floor(t/tc)
         # Calculate total strain
@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 worksheet.write(i, j, data[i][j])
             else:
                 worksheet.write(i, j, rate_data[i][j - len(data[i])])
-    savePath = 'F:\\Coderlife\\Pilogue\\d1raw_t72.csv'
+    savePath = 'F:\\Coderlife\\Pilogue\\d1raw.csv'
     work_book.save(savePath)
 
     # # Extract data after Standardization
