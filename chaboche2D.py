@@ -3,10 +3,10 @@ import math
 import numpy as np
 import copy
 from scipy.integrate import odeint
+
 import matplotlib.pyplot as plt
 import xlwt
 from sklearn.preprocessing import StandardScaler
-
 
 
 class Chaboche2D:
@@ -73,14 +73,14 @@ class Chaboche2D:
             param3 (int) : The mechanical displacement for this step
         Returns :
             Array containing the derivatives of viscoplastic strain tensor,
-            back stress tensor, drag stress and plastics train in t, with
+            back stress tensor, drag stress and plastic strain in t, with
             the initial value z0 in the first row.
 
         """
         Evp = z[: 3].reshape(3, 1)   # Inelastic strain tensor
         X = z[3: 6].reshape(3, 1)    # Back stress tensor
-        R = copy. deepcopy(z[6])     # Drag stress
-        p = copy. deepcopy(z[7])     # plastic strain
+        R = copy.deepcopy(z[6])     # Drag stress
+        p = copy.deepcopy(z[7])     # plastic strain
         ET = ET.reshape(3, 1)        # Total strain
         # Calculate Stress
         S = np.matmul(stiff, ET-Evp)
@@ -128,7 +128,7 @@ class Chaboche2D:
 
         """
         # Define Stiff matrix
-        stiff = self.E / (1-self.v**2) * np.array([[1,     self.v,               0],
+        stiff = self.E / (1-self.v**2) * np.array([[1,    self.v,                0],
                                                    [self.v,    1,                0],
                                                    [0,         0, (1 - self.v) / 2]])
         # Initialize Total strain tensor
@@ -150,10 +150,12 @@ class Chaboche2D:
             tspan = [t[i-1], t[i]]
             # Solve for next step
             z = odeint(self.deriv, z0, tspan, args=(stiff, ET))
-            ##############################################
-            #sigma.append(stiff * (ET - z[1, 0:3]))
-            #rate.append(self.deriv(z0, tspan, stiff, ET))
-            ##############################################
+            # ######################### *adding* ########################## #
+            sigma.append(list(stiff * (ET - z[1, 0:3])))
+            # stiff和(ET-z[1, 0:3])可以乘，但是出来的是array，sigma第一组数据是list，使用的append函数也仅限于list使用，强行转化为list
+            # 最后的结果就是list成为了最大的类型，大类型里套了个小类型叫array。。
+            rate.append(self.deriv(np.array(z0), tspan, stiff, ET))
+            # ######################### *adding* ########################## #
             # store solution for plotting
             self.solutions.append(z)
             # Next initial condition
@@ -165,10 +167,10 @@ class Chaboche2D:
 if __name__ == "__main__":
     # initial conditions - Evp(tensor) / X(tensor) / R / p
     z0 = [0, 0, 0, 0, 0, 0, 50.0, 0]
-    ##############################################
-    #sigma = [[0, 0, 0]]
-    #rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
-    ##############################################
+    # ######################### *adding* ########################## #
+    sigma = [[0, 0, 0]]
+    rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
+    # ######################### *adding* ########################## #
     # number of data points
     n = 1000
     # Choose one test from −> (xx, yy, xy)
@@ -182,7 +184,8 @@ if __name__ == "__main__":
     t = np.linspace(0, 80, n)
     # Solve Chaboche’s 2D model with given material parameters
     model_2D.solve(z0, t)
-    #######################################
+
+    # ######################### *adding* ########################## #
     data1 = np.array(model_2D.solutions)
     data = np.zeros((1000, 8))
     for j in range(8):
@@ -191,38 +194,23 @@ if __name__ == "__main__":
                 data[i, j] = data1[i, 0, j]
             else:
                 data[i, j] = data1[i - 1, 1, j]
-    # sigma1 = np.array(sigma)
-    # data = np.insert(data, 3, sigma1, axis=1)
-    plt.plot(t, data[:, 0], label='Evp_x')
-    plt.plot(t, data[:, 1], label='Evp_y')
-    plt.plot(t, data[:, 2], label='Evp_z')
-    plt.plot(t, data[:, 3], label='X_x')
-    plt.plot(t, data[:, 4], label='X_y')
-    plt.plot(t, data[:, 5], label='X_z')
-    plt.plot(t, data[:, 6], label='R')
-    plt.plot(t, data[:, 7], label='p')
-    # plt.plot(t, data[:, 8], label='σx')
-    # plt.plot(t, data[:, 9], label='σy')
-    # plt.plot(t, data[:, 10], label='σz')
+    # ######################### *adding* ########################## #
+    sigma1 = np.array(sigma)
+    data = np.insert(data, 3, sigma1, axis=1)
+    # ######################### *adding* ########################## #
+    labels = ['Evp_x', 'Evp_y', 'Evp_z', 'X_x', 'X_y', 'X_z', 'R', 'p', 'σx', 'σy', 'σz']
+    for i, label in enumerate(labels):
+        plt.plot(t, data[:, i], label=label)
     plt.grid()
     plt.legend()
     plt.show()
-    # #######################################
+    # ####################################### #
     #
-    # ################# standardization ###################
+    # ################# standardization ################### #
     scaler = StandardScaler()
     data_train = scaler.fit_transform(data)
-    plt.plot(range(n), data_train[:, 0], label='Evp_x')
-    plt.plot(range(n), data_train[:, 1], label='Evp_y')
-    plt.plot(range(n), data_train[:, 2], label='Evp_z')
-    plt.plot(range(n), data_train[:, 3], label='X_x')
-    plt.plot(range(n), data_train[:, 4], label='X_y')
-    plt.plot(range(n), data_train[:, 5], label='X-z')
-    plt.plot(range(n), data_train[:, 6], label='R')
-    plt.plot(range(n), data_train[:, 7], label='p')
-    # plt.plot(range(n), data_train[:, 8], label='σx')
-    # plt.plot(range(n), data_train[:, 9], label='σy')
-    # plt.plot(range(n), data_train[:, 10], label='σz')
+    for i, label in enumerate(labels):
+        plt.plot(range(n), data_train[:, i], label=label)
     plt.title("2D_Standardization")
     plt.xlabel("Training sample")
     plt.ylabel("stress/Mpa")

@@ -141,7 +141,7 @@ if __name__ == "__main__":
     plt.grid()
     plt.legend()
     plt.show()
-    ################# standardization ###################
+    # ################ standardization ################## #
     scaler = StandardScaler()
     data_train = scaler.fit_transform(data)
     plt.plot(range(n), data_train[:, 0], label='Evp')
