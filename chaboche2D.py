@@ -79,15 +79,15 @@ class Chaboche2D:
         """
         Evp = z[: 3].reshape(3, 1)   # Inelastic strain tensor
         X = z[3: 6].reshape(3, 1)    # Back stress tensor
-        R = copy.deepcopy(z[6])     # Drag stress
-        p = copy.deepcopy(z[7])     # plastic strain
+        R = copy.deepcopy(z[6])      # Drag stress
+        p = copy.deepcopy(z[7])      # plastic strain
         ET = ET.reshape(3, 1)        # Total strain
         # Calculate Stress
         S = np.matmul(stiff, ET-Evp)
-        if self.test == 'xx':       # Txx
-            S[1] = 0                # S22=0
-        elif self.test == 'yy':     # Txy
-            S[0] = 0                # S11=0
+        if self.test == 'xx':        # Txx
+            S[1] = 0                 # S22=0
+        elif self.test == 'yy':      # Txy
+            S[0] = 0                 # S11=0
         # Calculate deviatoric Stress
         S_dev = copy.deepcopy(S)
         S_dev[0][0] -= (1. / 2.) * (S[0] + S[1])
@@ -127,6 +127,7 @@ class Chaboche2D:
                             to solve for z.
 
         """
+        global sigma
         # Define Stiff matrix
         stiff = self.E / (1-self.v**2) * np.array([[1,    self.v,                0],
                                                    [self.v,    1,                0],
@@ -151,10 +152,8 @@ class Chaboche2D:
             # Solve for next step
             z = odeint(self.deriv, z0, tspan, args=(stiff, ET))
             # ######################### *adding* ########################## #
-            sigma.append(list(stiff * (ET - z[1, 0:3])))
-            # stiff和(ET-z[1, 0:3])可以乘，但是出来的是array，sigma第一组数据是list，使用的append函数也仅限于list使用，强行转化为list
-            # 最后的结果就是list成为了最大的类型，大类型里套了个小类型叫array。。
             rate.append(self.deriv(np.array(z0), tspan, stiff, ET))
+            sigma = np.append(sigma, np.transpose(np.dot(stiff, np.transpose(ET - z[1, 0:3]))), axis=0)
             # ######################### *adding* ########################## #
             # store solution for plotting
             self.solutions.append(z)
@@ -168,7 +167,7 @@ if __name__ == "__main__":
     # initial conditions - Evp(tensor) / X(tensor) / R / p
     z0 = [0, 0, 0, 0, 0, 0, 50.0, 0]
     # ######################### *adding* ########################## #
-    sigma = [[0, 0, 0]]
+    sigma = np.array([[0, 0, 0]])
     rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
     # ######################### *adding* ########################## #
     # number of data points
@@ -187,36 +186,59 @@ if __name__ == "__main__":
 
     # ######################### *adding* ########################## #
     data1 = np.array(model_2D.solutions)
-    data = np.zeros((1000, 8))
+    data_l = np.zeros((1000, 8))
     for j in range(8):
         for i in range(0, len(t)):
             if i < n - 1:
-                data[i, j] = data1[i, 0, j]
+                data_l[i, j] = data1[i, 0, j]
             else:
-                data[i, j] = data1[i - 1, 1, j]
+                data_l[i, j] = data1[i - 1, 1, j]
     # ######################### *adding* ########################## #
-    sigma1 = np.array(sigma)
-    data = np.insert(data, 3, sigma1, axis=1)
+    data = np.append(sigma, data_l, axis=1)
     # ######################### *adding* ########################## #
-    labels = ['Evp_x', 'Evp_y', 'Evp_z', 'X_x', 'X_y', 'X_z', 'R', 'p', 'σx', 'σy', 'σz']
+    labels = ['σxx', 'σyy', 'σxy', 'Evp_x', 'Evp_y', 'Evp_z', 'X_x', 'X_y', 'X_z', 'R', 'p']
     for i, label in enumerate(labels):
         plt.plot(t, data[:, i], label=label)
+    plt.title("2D_raw_input")
+    plt.xlabel("Training_steps/s")
+    plt.ylabel("stress/Mpa")
     plt.grid()
+    plt.legend()
+    plt.show()
+
+    labels_rate = ['rEvp_xx', 'rEvp_yy', 'rEvp_xy', 'rX_xx', 'rX_yy', 'rX_xy', 'R', 'p']
+    for i, label in enumerate(labels_rate):
+        plt.plot(t, rate[:, i], label=label)
+    plt.title("2D_Raw_output")
+    plt.xlabel("Training_steps /s")
+    plt.ylabel("stress_rate /Mpa/s")
+    plt.gird()
     plt.legend()
     plt.show()
     # ####################################### #
     #
     # ################# standardization ################### #
     scaler = StandardScaler()
-    data_train = scaler.fit_transform(data)
+    Xij = scaler.fit_transform(data)
     for i, label in enumerate(labels):
-        plt.plot(range(n), data_train[:, i], label=label)
-    plt.title("2D_Standardization")
-    plt.xlabel("Training sample")
+        plt.plot(t, Xij[:, i], label=label)
+    plt.title("2D_Standardization_input")
+    plt.xlabel("Training_steps/s")
     plt.ylabel("stress/Mpa")
     plt.grid()
     plt.legend()
     plt.show()
+
+    Yij = scaler.fit_transform(rate)
+    for i, label in enumerate(labels_rate):
+        plt.plot(t, Yij[:, i], label=label)
+    plt.title("2D_Standardization_output")
+    plt.xlabel("Training_steps /s")
+    plt.ylabel("stress_rate /Mpa/s")
+    plt.grid()
+    plt.legend()
+    plt.show()
+    # ################# standardization ################### #
     #
     # # Extract data
     # work_book = xlwt.Workbook(encoding="UTF-8")
