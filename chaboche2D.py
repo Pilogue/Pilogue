@@ -173,9 +173,9 @@ if __name__ == "__main__":
     # number of data points
     n = 1000
     # Choose one test from −> (xx, yy, xy)
-    test = 'xx'
+    test = 'yy'
     # Maximum mechanical displacement for cyclic loading
-    Emax = 0.18
+    Emax = 0.16
     # Define material and test parameters
     # E, v, R1, k, K, a, b, c, n, test, Emax
     model_2D = Chaboche2D(5000.0, 0.3, 500.0, 0.0, 50.0, 7500.0, 0.6, 100.0, 3.0, test, Emax)
@@ -206,13 +206,14 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    labels_rate = ['rEvp_xx', 'rEvp_yy', 'rEvp_xy', 'rX_xx', 'rX_yy', 'rX_xy', 'R', 'p']
+    rate = np.array(rate)
+    labels_rate = ['rEvp_xx', 'rEvp_yy', 'rEvp_xy', 'rX_xx', 'rX_yy', 'rX_xy', 'rR', 'rp']
     for i, label in enumerate(labels_rate):
         plt.plot(t, rate[:, i], label=label)
     plt.title("2D_Raw_output")
     plt.xlabel("Training_steps /s")
     plt.ylabel("stress_rate /Mpa/s")
-    plt.gird()
+    plt.grid()
     plt.legend()
     plt.show()
     # ####################################### #
@@ -239,17 +240,16 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
     # ################# standardization ################### #
-    #
-    # # Extract data
-    # work_book = xlwt.Workbook(encoding="UTF-8")
-    # worksheet = work_book.add_sheet(sheetname='1d')
-    # for i in range(len(data_train)):
-    #     for j in range(len(data_train[i])):
-    #         worksheet.write(i, j, data_train[i][j])
-    # savePath = 'D:\\yan\\chaboche model\\2d.xls'
-    # worksheet = work_book.add_sheet(sheetname='1d_rate')
-    # for i in range(len(rate_train)):
-    #     for j in range(len(rate_train[i])):
-    #         worksheet.write(i, j, rate_train[i][j])
-    # work_book.save(savePath)
 
+    # Extract data 想了一下还是把九种数据分别导出成九个文件，剩下的交给jupyter啦~
+
+    work_book = xlwt.Workbook(encoding="UTF-8")
+    worksheet = work_book.add_sheet(sheetname='1d')
+    for i in range(len(data)):
+        for j in range(len(data[i]) + len(rate[i])):
+            if j < len(data[i]):
+                worksheet.write(i, j, data[i][j])
+            else:
+                worksheet.write(i, j, rate[i][j - len(data[i])])
+    savePath = 'D:\\Coderlife\\data_cha\\d2raw_yy_16.csv'
+    work_book.save(savePath)
