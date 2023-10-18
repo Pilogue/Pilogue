@@ -173,9 +173,9 @@ if __name__ == "__main__":
     # number of data points
     n = 1000
     # Choose one test from −> (xx, yy, xy)
-    test = 'yy'
+    test = 'xy'
     # Maximum mechanical displacement for cyclic loading
-    Emax = 0.16
+    Emax = 0.05
     # Define material and test parameters
     # E, v, R1, k, K, a, b, c, n, test, Emax
     model_2D = Chaboche2D(5000.0, 0.3, 500.0, 0.0, 50.0, 7500.0, 0.6, 100.0, 3.0, test, Emax)
@@ -251,5 +251,5 @@ if __name__ == "__main__":
                 worksheet.write(i, j, data[i][j])
             else:
                 worksheet.write(i, j, rate[i][j - len(data[i])])
-    savePath = 'D:\\Coderlife\\data_cha\\d2raw_yy_16.csv'
+    savePath = 'D:\\Coderlife\\data_cha\\d2raw_xy_05.csv'
     work_book.save(savePath)
