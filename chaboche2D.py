@@ -3,7 +3,7 @@ import math
 import numpy as np
 import copy
 from scipy.integrate import odeint
-
+import os
 import matplotlib.pyplot as plt
 import xlwt
 from sklearn.preprocessing import StandardScaler
@@ -128,6 +128,7 @@ class Chaboche2D:
 
         """
         global sigma
+        global epsl
         # Define Stiff matrix
         stiff = self.E / (1-self.v**2) * np.array([[1,    self.v,                0],
                                                    [self.v,    1,                0],
@@ -154,6 +155,7 @@ class Chaboche2D:
             # ######################### *adding* ########################## #
             rate.append(self.deriv(np.array(z0), tspan, stiff, ET))
             sigma = np.append(sigma, np.transpose(np.dot(stiff, np.transpose(ET - z[1, 0:3]))), axis=0)
+            epsl = np.append(epsl, ET, axis=0)
             # ######################### *adding* ########################## #
             # store solution for plotting
             self.solutions.append(z)
@@ -169,11 +171,12 @@ if __name__ == "__main__":
     # ######################### *adding* ########################## #
     sigma = np.array([[0, 0, 0]])
     rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
+    epsl = np.array([[0, 0, 0]])
     # ######################### *adding* ########################## #
     # number of data points
     n = 1000
     # Choose one test from −> (xx, yy, xy)
-    test = 'xy'
+    test = 'xx'
     # Maximum mechanical displacement for cyclic loading
     Emax = 0.05
     # Define material and test parameters
@@ -216,7 +219,29 @@ if __name__ == "__main__":
     plt.grid()
     plt.legend()
     plt.show()
-    # ####################################### #
+# ############################## ε-σ ############################## #
+    labs = [test, str(round(Emax * 1000))]
+    tag = '_'.join(labs)
+    strain = np.array([])
+    stress = np.array([])
+# 这一段真的极具C风格。。。
+    if test == 'xx':
+        strain = epsl[:, 0]
+        stress = sigma[:, 0]
+    elif test == 'yy':
+        strain = epsl[:, 1]
+        stress = sigma[:, 1]
+    else:
+        strain = epsl[:, 2]
+        stress = sigma[:, 2]
+    plt.plot(strain, stress)
+    plt.title(tag)
+    plt.xlabel("Strain")
+    plt.ylabel("stress/Mpa")
+    plt.grid()
+    plt.legend()
+    plt.show()
+# ############################## ε-σ ############################## #
     #
     # ################# standardization ################### #
     scaler = StandardScaler()
@@ -244,12 +269,21 @@ if __name__ == "__main__":
     # Extract data 想了一下还是把九种数据分别导出成九个文件，剩下的交给jupyter啦~
 
     work_book = xlwt.Workbook(encoding="UTF-8")
-    worksheet = work_book.add_sheet(sheetname='1d')
+    worksheet = work_book.add_sheet(sheetname='2d')
     for i in range(len(data)):
         for j in range(len(data[i]) + len(rate[i])):
             if j < len(data[i]):
                 worksheet.write(i, j, data[i][j])
             else:
                 worksheet.write(i, j, rate[i][j - len(data[i])])
-    savePath = 'D:\\Coderlife\\data_cha\\d2raw_xy_05.csv'
+    current_path = os.getcwd()
+    savePath = '{0}\data2d\d2raw_{1}.csv'.format(current_path, tag)
+    work_book.save(savePath)
+
+    work_book = xlwt.Workbook(encoding="UTF-8")
+    worksheet = work_book.add_sheet(sheetname='2d')
+    for i in range(epsl.shape[0]):
+        for j in range(epsl.shape[1]):
+            worksheet.write(i, j, epsl[i][j])
+    savePath = '{0}\d2strain_{1}.csv'.format(current_path, tag)
     work_book.save(savePath)
