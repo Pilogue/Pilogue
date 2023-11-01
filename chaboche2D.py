@@ -168,17 +168,17 @@ class Chaboche2D:
 if __name__ == "__main__":
     # initial conditions - Evp(tensor) / X(tensor) / R / p
     z0 = [0, 0, 0, 0, 0, 0, 50.0, 0]
-    # ######################### *adding* ########################## #
     sigma = np.array([[0, 0, 0]])
     rate = [[0, 0, 0, 0, 0, 0, 0, 0]]
     epsl = np.array([[0, 0, 0]])
-    # ######################### *adding* ########################## #
     # number of data points
     n = 1000
+    # ################################## *adding* ################################### #
     # Choose one test from −> (xx, yy, xy)
-    test = 'xx'
+    test = 'yy'
     # Maximum mechanical displacement for cyclic loading
-    Emax = 0.05
+    Emax = 0.11
+    # ################################## *adding* ################################### #
     # Define material and test parameters
     # E, v, R1, k, K, a, b, c, n, test, Emax
     model_2D = Chaboche2D(5000.0, 0.3, 500.0, 0.0, 50.0, 7500.0, 0.6, 100.0, 3.0, test, Emax)
@@ -188,6 +188,9 @@ if __name__ == "__main__":
     model_2D.solve(z0, t)
 
     # ######################### *adding* ########################## #
+    current_path = os.getcwd()
+    labs = [test, str(round(Emax * 1000))]
+    tag = '_'.join(labs)
     data1 = np.array(model_2D.solutions)
     data_l = np.zeros((1000, 8))
     for j in range(8):
@@ -196,9 +199,8 @@ if __name__ == "__main__":
                 data_l[i, j] = data1[i, 0, j]
             else:
                 data_l[i, j] = data1[i - 1, 1, j]
-    # ######################### *adding* ########################## #
     data = np.append(sigma, data_l, axis=1)
-    # ######################### *adding* ########################## #
+    X_path = '{0}\\fgs_2dio\d2rX_{1}.png'.format(current_path, tag)
     labels = ['σxx', 'σyy', 'σxy', 'Evp_x', 'Evp_y', 'Evp_z', 'X_x', 'X_y', 'X_z', 'R', 'p']
     for i, label in enumerate(labels):
         plt.plot(t, data[:, i], label=label)
@@ -207,9 +209,11 @@ if __name__ == "__main__":
     plt.ylabel("stress/Mpa")
     plt.grid()
     plt.legend()
+    plt.savefig(X_path)
     plt.show()
 
     rate = np.array(rate)
+    Y_path = '{0}\\fgs_2dio\d2rY_{1}.png'.format(current_path, tag)
     labels_rate = ['rEvp_xx', 'rEvp_yy', 'rEvp_xy', 'rX_xx', 'rX_yy', 'rX_xy', 'rR', 'rp']
     for i, label in enumerate(labels_rate):
         plt.plot(t, rate[:, i], label=label)
@@ -218,12 +222,12 @@ if __name__ == "__main__":
     plt.ylabel("stress_rate /Mpa/s")
     plt.grid()
     plt.legend()
+    plt.savefig(Y_path)
     plt.show()
 # ############################## ε-σ ############################## #
-    labs = [test, str(round(Emax * 1000))]
-    tag = '_'.join(labs)
     strain = np.array([])
     stress = np.array([])
+    strain_path = '{0}\\figures_2dt\d2raw_{1}.png'.format(current_path, tag)
 # 这一段真的极具C风格。。。
     if test == 'xx':
         strain = epsl[:, 0]
@@ -240,12 +244,14 @@ if __name__ == "__main__":
     plt.ylabel("stress/Mpa")
     plt.grid()
     plt.legend()
+    plt.savefig(strain_path)  # 保存图片
     plt.show()
 # ############################## ε-σ ############################## #
     #
     # ################# standardization ################### #
     scaler = StandardScaler()
     Xij = scaler.fit_transform(data)
+    Xs_path = '{0}\\fgs_2dio\d2si_{1}.png'.format(current_path, tag)
     for i, label in enumerate(labels):
         plt.plot(t, Xij[:, i], label=label)
     plt.title("2D_Standardization_input")
@@ -253,9 +259,11 @@ if __name__ == "__main__":
     plt.ylabel("stress/Mpa")
     plt.grid()
     plt.legend()
+    plt.savefig(Xs_path)
     plt.show()
 
     Yij = scaler.fit_transform(rate)
+    Ys_path = '{0}\\fgs_2dio\d2so_{1}.png'.format(current_path, tag)
     for i, label in enumerate(labels_rate):
         plt.plot(t, Yij[:, i], label=label)
     plt.title("2D_Standardization_output")
@@ -263,6 +271,7 @@ if __name__ == "__main__":
     plt.ylabel("stress_rate /Mpa/s")
     plt.grid()
     plt.legend()
+    plt.savefig(Ys_path)
     plt.show()
     # ################# standardization ################### #
 
@@ -276,8 +285,7 @@ if __name__ == "__main__":
                 worksheet.write(i, j, data[i][j])
             else:
                 worksheet.write(i, j, rate[i][j - len(data[i])])
-    current_path = os.getcwd()
-    savePath = '{0}\data2d\d2raw_{1}.csv'.format(current_path, tag)
+    savePath = '{0}\data2dtest\d2raw_{1}.csv'.format(current_path, tag)
     work_book.save(savePath)
 
     work_book = xlwt.Workbook(encoding="UTF-8")
